@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <title>SafeHub AI | Neural Security Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500;800&display=swap');
+        body { font-family: 'JetBrains Mono', monospace; background: #010409; color: #c9d1d9; }
+        .cyber-card { border: 1px solid #30363d; background: #0d1117; transition: 0.3s; }
+        .cyber-card:hover { border-color: #58a6ff; box-shadow: 0 0 20px rgba(88,166,255,0.1); }
+        .scan-line { width: 100%; height: 1px; background: #58a6ff; position: absolute; top: 0; animation: move 2s linear infinite; display: none; }
+        @keyframes move { 0% { top: 0; } 100% { top: 100%; } }
+        .stat-value { background: linear-gradient(90deg, #58a6ff, #bc8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    </style>
+</head>
+<body class="p-4 md:p-16">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-12 border-b border-gray-800 pb-6 flex justify-between items-end">
+            <div>
+                <h1 class="text-4xl font-extrabold text-white tracking-tighter italic">SAFEHUB<span class="text-blue-500">.AI</span></h1>
+                <p class="text-xs text-gray-500 uppercase tracking-widest mt-2">Neural Threat Detection System v1.0</p>
+            </div>
+            <div class="text-[10px] text-emerald-500 font-bold animate-pulse">● ENGINE_READY</div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-8 space-y-6">
+                <div class="cyber-card p-6 rounded-lg relative overflow-hidden" id="inputArea">
+                    <div id="line" class="scan-line"></div>
+                    <div class="text-[10px] text-gray-600 mb-2">// SOURCE_ANALYSIS_INPUT</div>
+                    <textarea id="msg" class="w-full bg-transparent border-none outline-none text-lg h-48 resize-none text-blue-100 placeholder-gray-800" placeholder="Şübhəli mesajı, linki və ya SMS-i bura daxil edin..."></textarea>
+                    <button onclick="run()" id="btn" class="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded transition-all uppercase text-sm tracking-widest shadow-lg shadow-blue-900/20">Sistemi İşə Sal</button>
+                </div>
+
+                <div id="res" class="hidden cyber-card p-8 rounded-lg border-l-4 border-l-blue-500 animate-in fade-in duration-500">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 id="t-type" class="text-xl font-bold text-blue-400">---</h2>
+                        <span id="conf" class="text-[10px] bg-gray-800 px-2 py-1 rounded text-gray-400">---</span>
+                    </div>
+                    <p id="reason" class="text-gray-300 leading-relaxed italic mb-6 text-sm md:text-base"></p>
+                    <div class="bg-gray-950 p-4 rounded border border-gray-800">
+                        <span class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Təhlükəsizlik Protokolu (Tövsiyə):</span>
+                        <p id="plan" class="text-sm mt-2 text-gray-400 font-sans"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 space-y-6">
+                <div class="cyber-card p-8 rounded-lg text-center">
+                    <div id="score" class="text-7xl font-black mb-2 text-gray-800 tracking-tighter">--</div>
+                    <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Risk Səviyyəsi</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="cyber-card p-4 rounded-lg text-center">
+                        <div id="totalScans" class="text-xl font-bold stat-value">0</div>
+                        <p class="text-[8px] text-gray-600 uppercase mt-1">Cəmi Skan</p>
+                    </div>
+                    <div class="cyber-card p-4 rounded-lg text-center border-red-900/30">
+                        <div id="threatsFound" class="text-xl font-bold text-red-500">0</div>
+                        <p class="text-[8px] text-gray-600 uppercase mt-1">Bloklanıb</p>
+                    </div>
+                </div>
+
+                <div class="cyber-card p-4 rounded-lg">
+                    <div class="text-[10px] text-gray-500 uppercase mb-3 font-bold tracking-widest border-b border-gray-800 pb-2">Sistem Məlumatı</div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-[9px]">
+                            <span class="text-gray-600">MODEL:</span>
+                            <span class="text-blue-400">GEMINI 1.5 FLASH</span>
+                        </div>
+                        <div class="flex justify-between text-[9px]">
+                            <span class="text-gray-600">REGION:</span>
+                            <span class="text-blue-400">US-CENTRAL-1</span>
+                        </div>
+                        <div class="flex justify-between text-[9px]">
+                            <span class="text-gray-600">ENGINE:</span>
+                            <span class="text-blue-400">VERTEX AI</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-[9px] text-gray-600 leading-loose italic">
+                    [ANALİZ]: Bu neyron şəbəkə Azərbaycan dilindəki semantik manipulyasiyaları və sosial mühəndislik ssenarilərini tanımaq üçün optimallaşdırılıb.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function run() {
+            const m = document.getElementById('msg').value;
+            if(!m) return;
+            
+            const btn = document.getElementById('btn');
+            const line = document.getElementById('line');
+            const res = document.getElementById('res');
+            
+            // UI vizualizasiyasını başlat
+            btn.disabled = true; 
+            btn.innerText = "NEYRON ŞƏBƏKƏ ANALİZ EDİR...";
+            line.style.display = 'block';
+            res.classList.add('hidden');
+
+            try {
+                const r = await fetch('/scan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: m})
+                });
+                
+                const responseData = await r.json();
+                
+                // main.py-dan gələn datanı parçalayırıq
+                const d = responseData.result; 
+                const stats = responseData.stats;
+
+                // Nəticələri ekrana yazdır
+                res.classList.remove('hidden');
+                document.getElementById('reason').innerText = d.reason;
+                document.getElementById('t-type').innerText = d.threat_type.toUpperCase();
+                document.getElementById('conf').innerText = `DƏQİQLİK: ${d.confidence}`;
+                document.getElementById('plan').innerText = d.action_plan;
+                
+                // Risk balını vizuallaşdır
+                const s = document.getElementById('score');
+                s.innerText = d.risk_score;
+                s.className = d.risk_score > 6 ? "text-7xl font-black mb-2 text-red-500" : (d.risk_score > 3 ? "text-7xl font-black mb-2 text-yellow-500" : "text-7xl font-black mb-2 text-emerald-500");
+
+                // Statistikaları yenilə
+                if(stats) {
+                    document.getElementById('totalScans').innerText = stats.total_scans;
+                    document.getElementById('threatsFound').innerText = stats.threats_found;
+                }
+
+            } catch(e) { 
+                console.error(e);
+                alert("Sistemdə xəta baş verdi. Terminalı yoxlayın."); 
+            } finally { 
+                btn.disabled = false; 
+                btn.innerText = "Sistemi İşə Sal"; 
+                line.style.display = 'none'; 
+            }
+        }
+    </script>
+</body>
+</html>
